@@ -12,6 +12,7 @@ class PDFProcessor:
         """
         Processes a PDF: detects PII and performs physical redaction.
         Supports both native and scanned PDFs.
+        Optimized for output file size.
         """
         doc = fitz.open(input_path)
         audit_results = []
@@ -42,6 +43,7 @@ class PDFProcessor:
                 page.apply_redactions()
             else:
                 # Scanned PDF or page with no text
+                # We use a reasonable resolution for OCR
                 pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
                 img_data = pix.tobytes("png")
 
@@ -52,21 +54,28 @@ class PDFProcessor:
                     f.write(img_data)
 
                 try:
-                    # Corrected parameter name: entities_to_ignore
                     results = self.image_redactor.redact(temp_img_in, temp_img_out, entities_to_ignore=entities_to_ignore, doc_type=doc_type)
                     audit_results.extend(results)
 
-                    redacted_pix = fitz.Pixmap(temp_img_out)
-                    page.insert_image(page.rect, pixmap=redacted_pix)
+                    # Insert the redacted image back.
+                    # To optimize size, we could use JPEG but PNG is safer for redaction quality.
+                    # However, we'll rely on the overall doc optimization at save time.
+                    page.insert_image(page.rect, filename=temp_img_out)
                     page.add_redact_annot(page.rect)
                     page.apply_redactions()
-                    page.insert_image(page.rect, pixmap=redacted_pix)
+                    page.insert_image(page.rect, filename=temp_img_out)
                 except Exception as e:
                     print(f"Warning: Could not OCR page {page_num}: {e}")
                 finally:
                     if os.path.exists(temp_img_in): os.remove(temp_img_in)
                     if os.path.exists(temp_img_out): os.remove(temp_img_out)
 
-        doc.save(output_path)
+        # Optimize the output PDF
+        doc.save(
+            output_path,
+            garbage=4,
+            deflate=True,
+            clean=True
+        )
         doc.close()
         return audit_results
