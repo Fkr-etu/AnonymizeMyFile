@@ -24,7 +24,6 @@ class PDFProcessor:
 
             if text.strip():
                 # Native PDF with text
-                # We pass doc_type here!
                 results = self.analyzer.analyze(text, doc_type=doc_type)
 
                 # Filter out ignored entities
@@ -55,8 +54,8 @@ class PDFProcessor:
                     f.write(img_data)
 
                 try:
-                    # Pass doc_type to redactor (though currently limited use there)
-                    results = self.image_redactor.redact(temp_img_in, temp_img_out, entities_to_keep=entities_to_ignore, doc_type=doc_type)
+                    # Corrected parameter name: entities_to_ignore
+                    results = self.image_redactor.redact(temp_img_in, temp_img_out, entities_to_ignore=entities_to_ignore, doc_type=doc_type)
                     audit_results.extend(results)
 
                     redacted_pix = fitz.Pixmap(temp_img_out)

@@ -3,29 +3,30 @@ from PIL import Image, ImageChops, ImageDraw
 import io
 
 class FrenchImageRedactor:
-    def __init__(self, analyzer_engine):
-        self.engine = ImageRedactorEngine(image_analyzer_engine=analyzer_engine)
-        self.analyzer_engine = ImageAnalyzerEngine(analyzer_engine=analyzer_engine)
+    def __init__(self, french_analyzer):
+        self.french_analyzer = french_analyzer
+        self.analyzer_engine = ImageAnalyzerEngine(analyzer_engine=french_analyzer.engine)
+        self.engine = ImageRedactorEngine(image_analyzer_engine=self.analyzer_engine)
 
-    def redact(self, image_path, output_path, entities_to_keep=None, doc_type=None):
+    def redact(self, image_path, output_path, entities_to_ignore=None, doc_type=None):
         image = Image.open(image_path)
 
-        # 1. Analyze for audit
-        # Note: Presidio's ImageAnalyzerEngine doesn't easily support allow_list
-        # because it's built on OCR + Analyzer.
-        # For simplicity, we filter the results after analysis.
-        analysis_results = self.analyzer_engine.analyze(image, language="fr")
+        # 1. Get allow list
+        allow_list = self.french_analyzer.get_allow_list(doc_type)
 
-        # 2. Filter results
+        # 2. Analyze for audit
+        # Keyword arguments (except image and ocr_kwargs) are passed to text analyzer's analyze method
+        analysis_results = self.analyzer_engine.analyze(
+            image,
+            language="fr",
+            allow_list=allow_list
+        )
+
+        # 3. Filter out ignored entities
         filtered_results = []
         for res in analysis_results:
-            if entities_to_keep and res.entity_type in entities_to_keep:
+            if entities_to_ignore and res.entity_type in entities_to_ignore:
                 continue
-
-            # Since we don't have the text easily from ImageAnalyzerEngine results
-            # without re-OCR or more complex logic, the allow_list is harder to apply
-            # here than in text-based PDF.
-            # But most false positives (Loyer, Total) are better handled in text.
             filtered_results.append(res)
 
         # 3. Redact using bbox processor to avoid re-calling OCR/analyzer

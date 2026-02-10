@@ -8,12 +8,15 @@ Ce projet utilise Microsoft Presidio pour détecter et anonymiser des informatio
 - **Rédaction Physique Sécurisée** :
   - Utilise `PyMuPDF` (fitz) pour les PDF, garantissant la suppression définitive des données textuelles sous-jacentes (rédaction physique).
   - Support des **PDF scannés** via une conversion automatique en images et un traitement OCR.
+- **Intelligence Contextuelle** :
+  - **Détection automatique du type de document** (Quittance, Facture, Devis, Constat) pour réduire les faux positifs sur les termes techniques (ex: "Loyer", "Total", "Charges").
+  - Utilisation d'**allow-lists** globales et spécifiques par type de document.
 - **Extraction intelligente** :
   - Utilise `PyMuPDF` pour l'extraction de texte natif.
   - Utilise `Tesseract OCR` via `presidio-image-redactor` pour les images et PDF scannés.
 - **Détection spécialisée pour la France** :
   - Intégration du modèle spaCy `fr_core_news_md`.
-  - Reconnaisseurs personnalisés pour les plaques d'immatriculation (nouveaux et anciens formats).
+  - Reconnaisseurs personnalisés pour les plaques d'immatriculation (nouveaux et anciens formats) avec protection contre les faux positifs sur les dates.
   - Reconnaisseurs pour les numéros de police d'assurance.
 - **Piste d'Audit** : Génère un fichier JSON détaillé pour chaque document traité, listant les entités détectées et masquées.
 - **Extensibilité** : Possibilité d'ajouter facilement de nouveaux types d'entités via un fichier YAML.
@@ -45,28 +48,23 @@ Placez vos documents dans le dossier `input/` puis lancez :
 python main.py --input input --output output
 ```
 
-Les documents anonymisés et leurs logs d'audit seront disponibles dans le dossier `output/`.
+### Options avancées
 
-### Ajout de reconnaisseurs personnalisés
+- `--doc-type` : Forcer le type de document (`quittance`, `facture`, `devis`, `constat`). Par défaut, le type est deviné automatiquement.
+- `--ignore-entities` : Liste d'entités à ne pas masquer, séparées par des virgules (par défaut : `DATE_TIME`).
+- `--custom-recognizers` : Chemin vers un fichier YAML de reconnaisseurs personnalisés.
 
-Vous pouvez ajouter de nouvelles entités sans modifier le code via le fichier `custom_recognizers.yaml` :
-
-```yaml
-recognizers:
-  - entity: "FR_CONTRACT_NUMBER"
-    patterns:
-      - name: "contract_number"
-        regex: "CN-\\d{6}"
-        score: 0.9
-    context: ["contrat", "numéro"]
+Exemple :
+```bash
+python main.py --input input --output output --doc-type quittance --ignore-entities DATE_TIME,LOCATION
 ```
 
 ## Structure du projet
 
 - `main.py` : Point d'entrée de la ligne de commande (CLI).
 - `anonymizer/` :
-    - `analyzer.py` : Moteur de détection configuré pour le français.
-    - `recognizers.py` : Définition des reconnaisseurs spécifiques (plaques, assurance).
+    - `analyzer.py` : Moteur de détection configuré pour le français avec gestion du contexte.
+    - `recognizers.py` : Définition des reconnaisseurs spécifiques.
     - `pdf_processor.py` : Logique de traitement des PDF (natifs et scannés).
     - `redactor.py` : Logique de masquage des images.
     - `pipeline.py` : Orchestration globale.
