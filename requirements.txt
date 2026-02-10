@@ -1,0 +1,8 @@
+presidio-analyzer
+presidio-anonymizer
+presidio-image-redactor
+spacy
+pymupdf
+pytesseract
+pillow
+pyyaml
