@@ -3,9 +3,7 @@ from .analyzer import FrenchAnalyzer
 from .redactor import FrenchImageRedactor
 from .pdf_processor import PDFProcessor
 from .utils import AuditLogger
-from PIL import Image
 import fitz
-import io
 
 class AnonymizationPipeline:
     def __init__(self, output_dir, custom_recognizers=None, entities_to_ignore=None, default_doc_type=None):

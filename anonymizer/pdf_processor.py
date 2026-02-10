@@ -2,8 +2,6 @@ import fitz  # PyMuPDF
 from .analyzer import FrenchAnalyzer
 from .redactor import FrenchImageRedactor
 import os
-from PIL import Image
-import io
 
 class PDFProcessor:
     def __init__(self, analyzer: FrenchAnalyzer, image_redactor: FrenchImageRedactor):

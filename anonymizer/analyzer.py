@@ -14,9 +14,15 @@ class FrenchAnalyzer:
 
     DOC_SPECIFIC_ALLOW_LISTS = {
         "quittance": ["loyer", "Loyer", "charges", "Charges", "quittance", "Quittance", "location", "Location", "bail", "Bail"],
-        "facture": ["facture", "Facture", "client", "Client", "commande", "Commande", "article", "Article"],
-        "devis": ["devis", "Devis", "prestation", "Prestation", "estimation", "Estimation"],
-        "constat": ["constat", "Constat", "amiable", "Amiable", "véhicule", "Véhicule", "conducteur", "Conducteur", "choc", "Choc", "témoin", "Témoin", "assurance", "Assurance", "accident", "Accident"]
+        "facture": ["facture", "Facture", "client", "Client", "commande", "Commande", "article", "Article", "fournisseur", "Fournisseur"],
+        "devis": ["devis", "Devis", "prestation", "Prestation", "estimation", "Estimation", "matériaux", "main-d'oeuvre"],
+        "constat_auto": ["constat", "Constat", "amiable", "Amiable", "véhicule", "Véhicule", "conducteur", "Conducteur", "choc", "Choc", "témoin", "Témoin", "assurance", "Assurance", "accident", "Accident", "circonstances", "point", "choc"],
+        "constat_habitation": ["dégât", "Dégât", "eaux", "Eaux", "fuite", "Fuite", "robinet", "joint", "plafond", "infiltration", "sinistre", "Sinistre"],
+        "expertise": ["expert", "Expert", "rapport", "Rapport", "vétusté", "Vétusté", "dommages", "Dommages", "indemnisation", "conclusions", "conclusions"],
+        "identite": ["carte", "identité", "Identité", "passeport", "Passeport", "titre", "séjour", "naissance", "nationalité"],
+        "carte_grise": ["immatriculation", "Immatriculation", "certificat", "préfecture", "marque", "modèle", "titulaire"],
+        "permis_conduire": ["permis", "Permis", "conduire", "catégorie", "validité", "préfecture"],
+        "rib": ["banque", "Banque", "iban", "IBAN", "bic", "BIC", "compte", "titulaire", "relevé", "identité"]
     }
 
     def __init__(self, custom_recognizers_path=None):
@@ -65,11 +71,14 @@ class FrenchAnalyzer:
 
         for doc_type, keywords in self.DOC_SPECIFIC_ALLOW_LISTS.items():
             for keyword in keywords:
-                if keyword.lower() in combined_source:
+                # Count occurrences of keywords
+                occurrences = combined_source.count(keyword.lower())
+                if occurrences > 0:
+                    # More weight to filename matches
                     if keyword.lower() in filename.lower():
-                        scores[doc_type] += 5
+                        scores[doc_type] += 10 * occurrences
                     else:
-                        scores[doc_type] += 1
+                        scores[doc_type] += 1 * occurrences
 
         best_type = max(scores, key=scores.get)
         if scores[best_type] > 0:
