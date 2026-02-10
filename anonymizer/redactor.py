@@ -1,5 +1,5 @@
 from presidio_image_redactor import ImageRedactorEngine, ImageAnalyzerEngine
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw
 import io
 
 class FrenchImageRedactor:
@@ -28,8 +28,20 @@ class FrenchImageRedactor:
             # But most false positives (Loyer, Total) are better handled in text.
             filtered_results.append(res)
 
-        # 3. Redact
-        redacted_image = self.engine.redact(image, fill=(0, 0, 0), analyzer_results=filtered_results)
+        # 3. Redact using bbox processor to avoid re-calling OCR/analyzer
+        analyzer_bboxes = self.engine.bbox_processor.get_bboxes_from_analyzer_results(
+            filtered_results
+        )
+
+        redacted_image = ImageChops.duplicate(image)
+        draw = ImageDraw.Draw(redacted_image)
+
+        for box in analyzer_bboxes:
+            x0 = box["left"]
+            y0 = box["top"]
+            x1 = x0 + box["width"]
+            y1 = y0 + box["height"]
+            draw.rectangle([x0, y0, x1, y1], fill=(0, 0, 0))
 
         redacted_image.save(output_path)
         return filtered_results
