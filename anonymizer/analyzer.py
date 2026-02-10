@@ -66,7 +66,6 @@ class FrenchAnalyzer:
         for doc_type, keywords in self.DOC_SPECIFIC_ALLOW_LISTS.items():
             for keyword in keywords:
                 if keyword.lower() in combined_source:
-                    # Give more weight to keywords found in filename
                     if keyword.lower() in filename.lower():
                         scores[doc_type] += 5
                     else:
@@ -77,18 +76,20 @@ class FrenchAnalyzer:
             return best_type
         return None
 
-    def analyze(self, text, entities=None, doc_type=None, extra_allow_list=None):
+    def get_allow_list(self, doc_type=None, extra_allow_list=None):
         allow_list = self.GLOBAL_ALLOW_LIST.copy()
-
         if doc_type and doc_type in self.DOC_SPECIFIC_ALLOW_LISTS:
             allow_list.extend(self.DOC_SPECIFIC_ALLOW_LISTS[doc_type])
-
         if extra_allow_list:
             allow_list.extend(extra_allow_list)
+        return list(set(allow_list))
+
+    def analyze(self, text, entities=None, doc_type=None, extra_allow_list=None):
+        allow_list = self.get_allow_list(doc_type, extra_allow_list)
 
         return self.engine.analyze(
             text=text,
             language="fr",
             entities=entities,
-            allow_list=list(set(allow_list)) # Remove duplicates
+            allow_list=allow_list
         )
