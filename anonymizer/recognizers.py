@@ -10,8 +10,12 @@ class FrenchLicensePlateRecognizer(PatternRecognizer):
             ),
             Pattern(
                 name="license_plate_old",
-                regex=r"\b\d{1,4}\s[A-Z]{1,2}\s\d{2,3}\b",
-                score=0.8
+                # Much stricter regex for the old format:
+                # 1 to 4 digits, then 1 to 3 uppercase letters (excluding some common words),
+                # then 2 or 3 digits (department code).
+                # Added negative lookahead to ensure the letters are not common French words like 'au', 'le', 'et'.
+                regex=r"\b\d{1,4}\s(?!(?:AU|LE|LA|DU|DE|EN|UN|ET|AUX|LES)\b)[A-Z]{1,3}\s(?:0[1-9]|[1-8]\d|9[0-5]|2[AB]|97[1-8]|98[4-9])\b",
+                score=0.6
             )
         ]
         super().__init__(
