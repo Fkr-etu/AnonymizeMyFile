@@ -1,0 +1,7 @@
+recognizers:
+  - entity: "FR_CONTRACT_NUMBER"
+    patterns:
+      - name: "contract_number"
+        regex: "CN-\\d{6}"
+        score: 0.9
+    context: ["contrat", "numéro"]
