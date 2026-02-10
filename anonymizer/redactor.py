@@ -4,7 +4,7 @@ import io
 
 class FrenchImageRedactor:
     def __init__(self, analyzer_engine):
-        self.engine = ImageRedactorEngine(analyzer_engine=analyzer_engine)
+        self.engine = ImageRedactorEngine(image_analyzer_engine=analyzer_engine)
         self.analyzer_engine = ImageAnalyzerEngine(analyzer_engine=analyzer_engine)
 
     def redact(self, image_path, output_path):
