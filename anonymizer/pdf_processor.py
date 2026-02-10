@@ -10,7 +10,7 @@ class PDFProcessor:
         self.analyzer = analyzer
         self.image_redactor = image_redactor
 
-    def process(self, input_path, output_path):
+    def process(self, input_path, output_path, entities_to_ignore=None, doc_type=None):
         """
         Processes a PDF: detects PII and performs physical redaction.
         Supports both native and scanned PDFs.
@@ -18,16 +18,19 @@ class PDFProcessor:
         doc = fitz.open(input_path)
         audit_results = []
 
-        # We will create a new PDF to store results if we encounter scanned pages
-        # or just modify the current one.
-
         for page_num in range(len(doc)):
             page = doc[page_num]
             text = page.get_text()
 
             if text.strip():
                 # Native PDF with text
-                results = self.analyzer.analyze(text)
+                # We pass doc_type here!
+                results = self.analyzer.analyze(text, doc_type=doc_type)
+
+                # Filter out ignored entities
+                if entities_to_ignore:
+                    results = [res for res in results if res.entity_type not in entities_to_ignore]
+
                 audit_results.extend(results)
 
                 for res in results:
@@ -35,8 +38,6 @@ class PDFProcessor:
                     if not target_text.strip():
                         continue
 
-                    # Search for the text to get its coordinates
-                    # Note: this can have false positives if the same text appears elsewhere
                     areas = page.search_for(target_text)
                     for area in areas:
                         page.add_redact_annot(area, fill=(0, 0, 0))
@@ -44,11 +45,9 @@ class PDFProcessor:
                 page.apply_redactions()
             else:
                 # Scanned PDF or page with no text
-                # Convert page to image
-                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2)) # Higher resolution
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
                 img_data = pix.tobytes("png")
 
-                # Temp path for image redactor
                 temp_img_in = f"temp_page_{page_num}.png"
                 temp_img_out = f"temp_page_{page_num}_out.png"
 
@@ -56,15 +55,12 @@ class PDFProcessor:
                     f.write(img_data)
 
                 try:
-                    # This uses Tesseract OCR
-                    results = self.image_redactor.redact(temp_img_in, temp_img_out)
+                    # Pass doc_type to redactor (though currently limited use there)
+                    results = self.image_redactor.redact(temp_img_in, temp_img_out, entities_to_keep=entities_to_ignore, doc_type=doc_type)
                     audit_results.extend(results)
 
-                    # Replace page content with redacted image
-                    # We create a new page with the image size
                     redacted_pix = fitz.Pixmap(temp_img_out)
                     page.insert_image(page.rect, pixmap=redacted_pix)
-                    # We also need to remove any hidden text if it was just poorly OCRed
                     page.add_redact_annot(page.rect)
                     page.apply_redactions()
                     page.insert_image(page.rect, pixmap=redacted_pix)
