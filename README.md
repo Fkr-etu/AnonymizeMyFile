@@ -1,6 +1,6 @@
 # Projet d'Anonymisation de Documents (Images et PDF)
 
-Ce projet utilise Microsoft Presidio pour détecter et anonymiser des informations personnelles (PII) dans des documents français (factures, devis, constats automobiles, etc.).
+Ce projet utilise Microsoft Presidio pour détecter et anonymiser des informations personnelles (PII) dans des documents français liés à l'assurance et à la gestion administrative (factures, devis, constats, etc.).
 
 ## Fonctionnalités
 
@@ -9,7 +9,7 @@ Ce projet utilise Microsoft Presidio pour détecter et anonymiser des informatio
   - Utilise `PyMuPDF` (fitz) pour les PDF, garantissant la suppression définitive des données textuelles sous-jacentes (rédaction physique).
   - Support des **PDF scannés** via une conversion automatique en images et un traitement OCR.
 - **Intelligence Contextuelle** :
-  - **Détection automatique du type de document** (Quittance, Facture, Devis, Constat) pour réduire les faux positifs sur les termes techniques (ex: "Loyer", "Total", "Charges").
+  - **Détection automatique du type de document** pour réduire les faux positifs sur les termes techniques.
   - Utilisation d'**allow-lists** globales et spécifiques par type de document.
 - **Extraction intelligente** :
   - Utilise `PyMuPDF` pour l'extraction de texte natif.
@@ -20,6 +20,20 @@ Ce projet utilise Microsoft Presidio pour détecter et anonymiser des informatio
   - Reconnaisseurs pour les numéros de police d'assurance.
 - **Piste d'Audit** : Génère un fichier JSON détaillé pour chaque document traité, listant les entités détectées et masquées.
 - **Extensibilité** : Possibilité d'ajouter facilement de nouveaux types d'entités via un fichier YAML.
+
+## Types de documents supportés
+
+Le système est optimisé pour les documents suivants :
+- `quittance` : Quittances de loyer.
+- `facture` : Factures fournisseurs/clients.
+- `devis` : Devis de travaux ou services.
+- `constat_auto` : Constats amiables automobiles.
+- `constat_habitation` : Constats de dégâts des eaux ou sinistres habitation.
+- `expertise` : Rapports d'expertise d'assurance.
+- `identite` : Cartes d'identité, passeports.
+- `carte_grise` : Certificats d'immatriculation.
+- `permis_conduire` : Permis de conduire.
+- `rib` : Relevés d'identité bancaire.
 
 ## Installation
 
@@ -50,14 +64,9 @@ python main.py --input input --output output
 
 ### Options avancées
 
-- `--doc-type` : Forcer le type de document (`quittance`, `facture`, `devis`, `constat`). Par défaut, le type est deviné automatiquement.
-- `--ignore-entities` : Liste d'entités à ne pas masquer, séparées par des virgules (par défaut : `DATE_TIME`).
+- `--doc-type` : Forcer le type de document (parmi la liste ci-dessus). Par défaut, le type est deviné automatiquement.
+- `--ignore-entities` : Liste d'entités à ne pas masquer (par défaut : `DATE_TIME`).
 - `--custom-recognizers` : Chemin vers un fichier YAML de reconnaisseurs personnalisés.
-
-Exemple :
-```bash
-python main.py --input input --output output --doc-type quittance --ignore-entities DATE_TIME,LOCATION
-```
 
 ## Structure du projet
 
