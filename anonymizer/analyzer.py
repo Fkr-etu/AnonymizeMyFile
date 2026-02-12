@@ -78,7 +78,7 @@ class FrenchAnalyzer:
 
         # Store the registry for later access
         self.registry = registry
-
+        
         # Create the analyzer engine with the configured registry
         logger.info("Creating AnalyzerEngine...")
         self.engine = AnalyzerEngine(
@@ -181,40 +181,40 @@ class FrenchAnalyzer:
             allow_list=list(extended_allow_list)
         )
         logger.info(f"Analysis complete: found {len(results)} entities before filtering")
-
+        
         # Apply doc_type specific filtering and confidence adjustments
         filtered_results = self._filter_by_doc_type(results, doc_type)
         logger.info(f"After doc_type filtering: {len(filtered_results)} entities")
-
+        
         return filtered_results
 
     def _filter_by_doc_type(self, results, doc_type):
         """Filter and adjust results based on document type"""
         if not doc_type:
             return results
-
+        
         min_score_threshold = 0.5  # Default minimum score
         entities_to_exclude = []
-
+        
         # Configure filtering by document type
         if doc_type == "facture":
             min_score_threshold = 0.75  # Higher threshold for invoices
             # Exclude license plates from invoice analysis (typically not relevant)
             entities_to_exclude = ["FR_LICENSE_PLATE"]
             logger.debug(f"Invoice mode: min_score={min_score_threshold}, excluding {entities_to_exclude}")
-
+        
         elif doc_type in ["constat_auto", "constat_habitation"]:
             min_score_threshold = 0.7
             logger.debug(f"Report mode: min_score={min_score_threshold}")
-
+        
         elif doc_type == "extrait_compte":
             min_score_threshold = 0.8  # Very high for bank statements (sensitive)
             logger.debug(f"Bank statement mode: min_score={min_score_threshold}")
-
+        
         elif doc_type == "bulletin_salaire":
             min_score_threshold = 0.75
             logger.debug(f"Payroll mode: min_score={min_score_threshold}")
-
+        
         # Apply filtering
         filtered_results = []
         for result in results:
@@ -222,12 +222,12 @@ class FrenchAnalyzer:
             if result.entity_type in entities_to_exclude:
                 logger.debug(f"Excluding {result.entity_type} (not relevant for {doc_type})")
                 continue
-
+            
             # Apply minimum score threshold
             if result.score < min_score_threshold:
                 logger.debug(f"Filtering {result.entity_type} with score {result.score} < {min_score_threshold}")
                 continue
-
+            
             filtered_results.append(result)
-
+        
         return filtered_results

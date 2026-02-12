@@ -47,12 +47,12 @@ class AnonymizationPipeline:
     def process_file(self, file_path, manual_doc_type=None):
         filename = os.path.basename(file_path)
         ext = os.path.splitext(filename)[1].lower()
-
+        
         # Skip files without extension
         if not ext:
             print(f"Skipping {filename} (no file extension)")
             return None
-
+        
         output_path = os.path.join(self.output_dir, filename)
 
         sample_text = self._extract_sample_text(file_path)

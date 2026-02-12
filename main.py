@@ -66,7 +66,7 @@ def main():
 
     success_count = 0
     error_count = 0
-
+    
     for filename in files_to_process:
         file_path = os.path.join(args.input, filename)
         logger.info(f"\n=== Processing file: {filename} ===")
@@ -81,7 +81,7 @@ def main():
             error_count += 1
             logger.error(f"Error processing {filename}: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-
+    
     logger.info(f"\n=== Processing complete ===")
     logger.info(f"Success: {success_count}, Errors: {error_count}, Total: {len(files_to_process)}")
 
