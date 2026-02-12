@@ -58,8 +58,7 @@ class PDFProcessor:
                     audit_results.extend(results)
 
                     # Insert the redacted image back.
-                    # To optimize size, we could use JPEG but PNG is safer for redaction quality.
-                    # However, we'll rely on the overall doc optimization at save time.
+                    # To optimize size, we'll rely on the overall doc optimization at save time.
                     page.insert_image(page.rect, filename=temp_img_out)
                     page.add_redact_annot(page.rect)
                     page.apply_redactions()

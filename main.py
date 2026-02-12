@@ -7,7 +7,8 @@ def main():
     parser.add_argument("--input", default="input", help="Dossier contenant les fichiers à traiter")
     parser.add_argument("--output", default="output", help="Dossier où sauvegarder les fichiers anonymisés")
     parser.add_argument("--custom-recognizers", default="custom_recognizers.yaml", help="Fichier YAML des reconnaisseurs personnalisés")
-    parser.add_argument("--doc-type", help="Type de document manuel (quittance, facture, devis, constat)")
+    parser.add_argument("--allow-lists", default="allow_lists.yaml", help="Fichier YAML des listes d'autorisation")
+    parser.add_argument("--doc-type", help="Type de document manuel (ex: facture, devis, extrait_compte, bulletin_salaire, etc.)")
     parser.add_argument("--ignore-entities", default="DATE_TIME", help="Liste d'entités à ignorer (séparées par des virgules)")
 
     args = parser.parse_args()
@@ -20,11 +21,13 @@ def main():
         os.makedirs(args.output)
 
     custom_rec_path = args.custom_recognizers if os.path.exists(args.custom_recognizers) else None
+    allow_lists_path = args.allow_lists if os.path.exists(args.allow_lists) else None
     entities_to_ignore = [e.strip() for e in args.ignore_entities.split(",")] if args.ignore_entities else []
 
     pipeline = AnonymizationPipeline(
         args.output,
         custom_recognizers=custom_rec_path,
+        allow_lists=allow_lists_path,
         entities_to_ignore=entities_to_ignore,
         default_doc_type=args.doc_type
     )

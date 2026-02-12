@@ -11,9 +11,12 @@ Ce projet utilise Microsoft Presidio pour détecter et anonymiser des informatio
 - **Intelligence Contextuelle** :
   - **Détection automatique du type de document** pour réduire les faux positifs sur les termes techniques.
   - Utilisation d'**allow-lists** globales et spécifiques par type de document.
+- **Support de l'Écriture Manuscrite** :
+  - Utilisation d'un **moteur OCR hybride** : Tesseract pour le texte imprimé et **EasyOCR** pour les zones manuscrites (ex: constats remplis à la main).
+  - **Pré-traitement d'image** via OpenCV (nettoyage, binarisation, réduction du bruit) pour maximiser la précision de l'OCR sur les documents complexes.
 - **Extraction intelligente** :
   - Utilise `PyMuPDF` pour l'extraction de texte natif.
-  - Utilise `Tesseract OCR` via `presidio-image-redactor` pour les images et PDF scannés.
+  - Utilise `Tesseract OCR` et `EasyOCR` via `presidio-image-redactor` pour les images et PDF scannés.
 - **Détection spécialisée pour la France** :
   - Intégration du modèle spaCy `fr_core_news_md`.
   - Reconnaisseurs personnalisés pour les plaques d'immatriculation (nouveaux et anciens formats) avec protection contre les faux positifs sur les dates.
@@ -66,6 +69,7 @@ python main.py --input input --output output
 
 - `--doc-type` : Forcer le type de document (parmi la liste ci-dessus). Par défaut, le type est deviné automatiquement.
 - `--ignore-entities` : Liste d'entités à ne pas masquer (par défaut : `DATE_TIME`).
+- `--allow-lists` : Chemin vers un fichier YAML de listes d'autorisation personnalisées.
 - `--custom-recognizers` : Chemin vers un fichier YAML de reconnaisseurs personnalisés.
 
 ## Structure du projet
@@ -73,6 +77,8 @@ python main.py --input input --output output
 - `main.py` : Point d'entrée de la ligne de commande (CLI).
 - `anonymizer/` :
     - `analyzer.py` : Moteur de détection configuré pour le français avec gestion du contexte.
+    - `image_processing.py` : Utilitaires de pré-traitement d'image (OpenCV).
+    - `ocr.py` : Moteur OCR Hybride (Tesseract + EasyOCR).
     - `recognizers.py` : Définition des reconnaisseurs spécifiques.
     - `pdf_processor.py` : Logique de traitement des PDF (natifs et scannés).
     - `redactor.py` : Logique de masquage des images.

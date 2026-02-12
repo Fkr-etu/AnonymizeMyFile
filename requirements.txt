@@ -6,3 +6,5 @@ pymupdf
 pytesseract
 pillow
 pyyaml
+easyocr
+opencv-python-headless
