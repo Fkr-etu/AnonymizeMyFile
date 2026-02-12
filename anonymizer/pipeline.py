@@ -1,20 +1,31 @@
 import os
+import logging
 from .analyzer import FrenchAnalyzer
 from .redactor import FrenchImageRedactor
 from .pdf_processor import PDFProcessor
 from .utils import AuditLogger
 import fitz
 
+logger = logging.getLogger(__name__)
+
 class AnonymizationPipeline:
     def __init__(self, output_dir, custom_recognizers=None, allow_lists=None, entities_to_ignore=None, default_doc_type=None):
-        self.analyzer = FrenchAnalyzer(custom_recognizers_path=custom_recognizers, allow_lists_path=allow_lists)
-        # Pass the whole analyzer wrapper to redactor
-        self.image_redactor = FrenchImageRedactor(self.analyzer)
-        self.pdf_processor = PDFProcessor(self.analyzer, self.image_redactor)
-        self.logger = AuditLogger(output_dir)
-        self.output_dir = output_dir
-        self.entities_to_ignore = entities_to_ignore or ["DATE_TIME"]
-        self.default_doc_type = default_doc_type
+        logger.info("Initializing AnonymizationPipeline...")
+        try:
+            self.analyzer = FrenchAnalyzer(custom_recognizers_path=custom_recognizers, allow_lists_path=allow_lists)
+            logger.info("FrenchAnalyzer initialized")
+            self.image_redactor = FrenchImageRedactor(self.analyzer)
+            logger.info("FrenchImageRedactor initialized")
+            self.pdf_processor = PDFProcessor(self.analyzer, self.image_redactor)
+            logger.info("PDFProcessor initialized")
+            self.logger = AuditLogger(output_dir)
+            self.output_dir = output_dir
+            self.entities_to_ignore = entities_to_ignore or ["DATE_TIME", "CARDINAL"]
+            self.default_doc_type = default_doc_type
+            logger.info(f"Pipeline ready. Entities to ignore: {self.entities_to_ignore}")
+        except Exception as e:
+            logger.error(f"Error initializing pipeline: {e}", exc_info=True)
+            raise
 
     def _extract_sample_text(self, file_path):
         """Extract a sample of text to help identify the document type."""
@@ -26,14 +37,22 @@ class AnonymizationPipeline:
                 for i in range(min(2, len(doc))):
                     text += doc[i].get_text()
                 doc.close()
+                logger.debug(f"Extracted {len(text)} characters from PDF: {os.path.basename(file_path)}")
                 return text
-            except:
+            except Exception as e:
+                logger.warning(f"Could not extract text from PDF {os.path.basename(file_path)}: {e}")
                 return ""
         return ""
 
     def process_file(self, file_path, manual_doc_type=None):
         filename = os.path.basename(file_path)
         ext = os.path.splitext(filename)[1].lower()
+
+        # Skip files without extension
+        if not ext:
+            print(f"Skipping {filename} (no file extension)")
+            return None
+
         output_path = os.path.join(self.output_dir, filename)
 
         sample_text = self._extract_sample_text(file_path)
