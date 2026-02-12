@@ -199,8 +199,8 @@ class FrenchAnalyzer:
         # Configure filtering by document type
         if doc_type == "facture":
             min_score_threshold = 0.75  # Higher threshold for invoices
-            # Exclude license plates from invoice analysis (typically not relevant)
-            entities_to_exclude = ["FR_LICENSE_PLATE"]
+            # Exclude license plates and money amounts from invoice analysis (not sensitive in this context)
+            entities_to_exclude = ["MONEY"]
             logger.debug(f"Invoice mode: min_score={min_score_threshold}, excluding {entities_to_exclude}")
         
         elif doc_type in ["constat_auto", "constat_habitation"]:
