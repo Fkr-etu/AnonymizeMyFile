@@ -52,6 +52,7 @@ sudo apt-get install -y tesseract-ocr tesseract-ocr-fra libtesseract-dev
 ```bash
 pip install -r requirements.txt
 python -m spacy download fr_core_news_md
+python -m spacy download en_core_web_sm
 ```
 
 ## Utilisation
