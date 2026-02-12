@@ -6,8 +6,8 @@ from .utils import AuditLogger
 import fitz
 
 class AnonymizationPipeline:
-    def __init__(self, output_dir, custom_recognizers=None, entities_to_ignore=None, default_doc_type=None):
-        self.analyzer = FrenchAnalyzer(custom_recognizers_path=custom_recognizers)
+    def __init__(self, output_dir, custom_recognizers=None, allow_lists=None, entities_to_ignore=None, default_doc_type=None):
+        self.analyzer = FrenchAnalyzer(custom_recognizers_path=custom_recognizers, allow_lists_path=allow_lists)
         # Pass the whole analyzer wrapper to redactor
         self.image_redactor = FrenchImageRedactor(self.analyzer)
         self.pdf_processor = PDFProcessor(self.analyzer, self.image_redactor)
