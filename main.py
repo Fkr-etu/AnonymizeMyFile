@@ -2,7 +2,11 @@ import argparse
 import os
 import logging
 import traceback
+from dotenv import load_dotenv
 from anonymizer.pipeline import AnonymizationPipeline
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -24,6 +28,7 @@ def main():
     parser.add_argument("--allow-lists", default="allow_lists.yaml", help="Fichier YAML des listes d'autorisation")
     parser.add_argument("--doc-type", help="Type de document manuel (ex: facture, devis, extrait_compte, bulletin_salaire, etc.)")
     parser.add_argument("--ignore-entities", default="DATE_TIME,CARDINAL", help="Liste d'entités à ignorer (séparées par des virgules)")
+    parser.add_argument("--mode", default="ocr", choices=["ocr", "vlm"], help="Mode d'anonymisation : 'ocr' (classique) ou 'vlm' (Google Gemini)")
 
     args = parser.parse_args()
 
@@ -46,6 +51,7 @@ def main():
     try:
         pipeline = AnonymizationPipeline(
             args.output,
+            mode=args.mode,
             custom_recognizers=custom_rec_path,
             allow_lists=allow_lists_path,
             entities_to_ignore=entities_to_ignore,
