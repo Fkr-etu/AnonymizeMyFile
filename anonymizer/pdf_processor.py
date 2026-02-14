@@ -11,7 +11,7 @@ class PDFProcessor:
         self.analyzer = analyzer
         self.image_redactor = image_redactor
 
-    def process(self, input_path, output_path, entities_to_ignore=None, doc_type=None):
+    def process(self, input_path, output_path, entities_to_ignore=None, doc_type=None, force_image_redaction=False):
         """
         Processes a PDF: detects PII and performs physical redaction.
         Supports both native and scanned PDFs.
@@ -31,7 +31,7 @@ class PDFProcessor:
             page = doc[page_num]
             text = page.get_text()
 
-            if text.strip():
+            if text.strip() and not force_image_redaction:
                 logger.debug(f"Page {page_num+1}: native text found")
                 # Native PDF with text
                 results = self.analyzer.analyze(text, doc_type=doc_type)
@@ -53,7 +53,10 @@ class PDFProcessor:
 
                 page.apply_redactions()
             else:
-                logger.info(f"Page {page_num+1}: no text found, treating as scan")
+                if force_image_redaction:
+                    logger.info(f"Page {page_num+1}: force_image_redaction is True (VLM mode)")
+                else:
+                    logger.info(f"Page {page_num+1}: no text found, treating as scan")
                 # Scanned PDF or page with no text
                 # We use a reasonable resolution for OCR
                 pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))

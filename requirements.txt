@@ -8,3 +8,5 @@ pillow
 pyyaml
 easyocr
 opencv-python-headless
+google-generativeai
+python-dotenv

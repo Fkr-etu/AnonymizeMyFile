@@ -2,6 +2,8 @@ import os
 import logging
 from .analyzer import FrenchAnalyzer
 from .redactor import FrenchImageRedactor
+from .vlm_engine import VLMEngine
+from .vlm_redactor import VLMImageRedactor
 from .pdf_processor import PDFProcessor
 from .utils import AuditLogger
 import fitz
@@ -9,15 +11,24 @@ import fitz
 logger = logging.getLogger(__name__)
 
 class AnonymizationPipeline:
-    def __init__(self, output_dir, custom_recognizers=None, allow_lists=None, entities_to_ignore=None, default_doc_type=None):
-        logger.info("Initializing AnonymizationPipeline...")
+    def __init__(self, output_dir, mode="ocr", custom_recognizers=None, allow_lists=None, entities_to_ignore=None, default_doc_type=None):
+        logger.info(f"Initializing AnonymizationPipeline in {mode} mode...")
+        self.mode = mode
         try:
             self.analyzer = FrenchAnalyzer(custom_recognizers_path=custom_recognizers, allow_lists_path=allow_lists)
             logger.info("FrenchAnalyzer initialized")
-            self.image_redactor = FrenchImageRedactor(self.analyzer)
-            logger.info("FrenchImageRedactor initialized")
+
+            if mode == "vlm":
+                self.vlm_engine = VLMEngine()
+                self.image_redactor = VLMImageRedactor(self.analyzer, self.vlm_engine)
+                logger.info("VLMImageRedactor initialized")
+            else:
+                self.image_redactor = FrenchImageRedactor(self.analyzer)
+                logger.info("FrenchImageRedactor initialized")
+
             self.pdf_processor = PDFProcessor(self.analyzer, self.image_redactor)
             logger.info("PDFProcessor initialized")
+
             self.logger = AuditLogger(output_dir)
             self.output_dir = output_dir
             self.entities_to_ignore = entities_to_ignore or ["DATE_TIME", "CARDINAL"]
@@ -55,19 +66,29 @@ class AnonymizationPipeline:
         
         output_path = os.path.join(self.output_dir, filename)
 
-        sample_text = self._extract_sample_text(file_path)
-        doc_type = manual_doc_type or self.default_doc_type or self.analyzer.detect_doc_type(sample_text, filename)
+        # In VLM mode, we let Gemini detect the doc type if not provided manually
+        if self.mode == "vlm":
+            doc_type = manual_doc_type or self.default_doc_type
+        else:
+            sample_text = self._extract_sample_text(file_path)
+            doc_type = manual_doc_type or self.default_doc_type or self.analyzer.detect_doc_type(sample_text, filename)
 
         if doc_type:
-            print(f"Processing {filename} as type: {doc_type}...")
+            print(f"Processing {filename} as type: {doc_type} ({self.mode} mode)...")
         else:
-            print(f"Processing {filename} (unknown type)...")
+            print(f"Processing {filename} (unknown type, {self.mode} mode)...")
 
         results = []
         if ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
             results = self.image_redactor.redact(file_path, output_path, entities_to_ignore=self.entities_to_ignore, doc_type=doc_type)
         elif ext == '.pdf':
-            results = self.pdf_processor.process(file_path, output_path, entities_to_ignore=self.entities_to_ignore, doc_type=doc_type)
+            results = self.pdf_processor.process(
+                file_path,
+                output_path,
+                entities_to_ignore=self.entities_to_ignore,
+                doc_type=doc_type,
+                force_image_redaction=(self.mode == "vlm")
+            )
         else:
             print(f"Unsupported file format: {ext}")
             return None
